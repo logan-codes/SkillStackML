@@ -1,6 +1,6 @@
 """
 Usage:
-  python test_certificate.py --image path/to/certificate.jpg
+  python resnet-b0.py --image path/to/certificate.jpg
 
 Requirements:
   pip install torch torchvision pillow numpy matplotlib
