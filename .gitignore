@@ -1,0 +1,133 @@
+# =============================================================================
+# LARGE FILES & MODEL WEIGHTS
+# =============================================================================
+# Model weights & checkpoints
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.h5
+*.hdf5
+*.pb
+*.onnx
+*.tflite
+*.mlmodel
+*.pkl
+*.pickle
+
+# Model directories (common patterns)
+models/
+weights/
+checkpoints/
+saved_models/
+model_cache/
+.cache/
+
+# Hugging Face cache
+~/.cache/huggingface/
+huggingface_cache/
+
+# =============================================================================
+# LARGE DATA FILES
+# =============================================================================
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.arrow
+*.jsonl
+*.ndjson
+*.avro
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.rar
+*.7z
+
+# Images / Audio / Video (datasets)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+*.mp3
+*.wav
+*.flac
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Data directories
+data/
+datasets/
+raw/
+processed/
+interim/
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =============================================================================
+# EXPERIMENT TRACKING & LOGS
+# =============================================================================
+# MLflow
+mlruns/
+mlartifacts/
+
+# Weights & Biases
+wandb/
+
+# TensorBoard
+runs/
+logs/
+*.log
+*.tfevents.*
+
+# =============================================================================
+# SECRETS & CONFIG
+# =============================================================================
+.env
+.env.*
+*.pem
+*.key
+secrets.yaml
+secrets.json
+config/local_*
+
+# =============================================================================
+# OS & EDITOR JUNK
+# =============================================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
