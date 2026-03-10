@@ -123,11 +123,26 @@ secrets.json
 config/local_*
 
 # =============================================================================
+# NODE.JS & FRONTEND
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js build output
+.next/
+out/
+.vercel/
+
+# =============================================================================
 # OS & EDITOR JUNK
 # =============================================================================
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+.history/
 *.swp
 *.swo
