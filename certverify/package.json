@@ -1,0 +1,16 @@
+{
+  "name": "certverify",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Certificate Verification System",
+  "scripts": {
+    "setup": "npm install && cd frontend && npm install && cd ..",
+    "setup:python": "pip install numpy\"<2\" && pip install -r backend/requirements.txt",
+    "start:backend": "cd backend && python main.py",
+    "start:frontend": "cd frontend && npm start",
+    "start": "concurrently --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm run start:backend\" \"npm run start:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
