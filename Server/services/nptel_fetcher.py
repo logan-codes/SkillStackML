@@ -1,7 +1,7 @@
 import re, os, logging, tempfile
 import requests
 from bs4 import BeautifulSoup
-from ocr_engine import extract_text
+from .ocr_engine import extract_text
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
