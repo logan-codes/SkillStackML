@@ -18,7 +18,7 @@ router = APIRouter(prefix="/verify")
 
 @router.post("/")
 async def verify(req: VerifyRequest = Depends()):
-    logger.info(f"[/verify] file={req.file.filename}  manual_url={repr(req.manual_url)}")
+    logger.info(f"[/verify] file={req.file.filename}  manual_url={repr(req.verification_url)}")
 
     content  = await req.file.read()
     tmp_path = _save(content, req.file.filename or "cert.png")
@@ -46,8 +46,8 @@ async def verify(req: VerifyRequest = Depends()):
 
         # Determine NPTEL URL to use
         nptel_url = None
-        if req.manual_url and req.manual_url.strip():
-            nptel_url = req.manual_url.strip()
+        if req.verification_url and req.verification_url.strip():
+            nptel_url = req.verification_url.strip()
             if not nptel_url.startswith("http"):
                 nptel_url = "https://" + nptel_url
             print(f"[step2] Using manual_url: {nptel_url}")

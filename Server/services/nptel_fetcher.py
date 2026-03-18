@@ -1,9 +1,12 @@
-import re, os, logging, tempfile
+from core.logger import get_logger
+
+import re, os, tempfile
 import requests
 from bs4 import BeautifulSoup
 from .ocr_engine import extract_text
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger= get_logger(__name__)
+
 
 NPTEL_BASE_URL = "https://internalapp.nptel.ac.in"
 
@@ -20,7 +23,6 @@ HEADERS = {
 
 def fetch_nptel(url: str) -> dict:
     steps = []
-    def log(msg): logging.info(msg); steps.append(msg)
 
     result = {
         "success": False, "text": "", "fields": {}, "url": url,
@@ -28,20 +30,20 @@ def fetch_nptel(url: str) -> dict:
     }
 
     # ── Step 1: Fetch original QR URL, follow redirects (exactly like verifier.py) ──
-    log(f"Step 1: Fetching NPTEL page: {url}")
+    logger.info(f"Step 1: Fetching NPTEL page: {url}")
     try:
         response = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True)
-        log(f"Step 1: HTTP {response.status_code}  final URL: {response.url}")
+        logger.info(f"Step 1: HTTP {response.status_code}  final URL: {response.url}")
         if not response.ok:
             result["detail"] = f"Failed to load NPTEL page (HTTP {response.status_code})."
             return result
     except Exception as e:
-        log(f"Step 1 ERROR: {e}")
+        logger.info(f"Step 1 ERROR: {e}")
         result["detail"] = f"Could not connect to NPTEL: {e}"
         return result
 
     # ── Step 2: Parse with html5lib — exact same as verifier.py ──────────────
-    log("Step 2: Parsing page — looking for 'Course Certificate' button...")
+    logger.info("Step 2: Parsing page — looking for 'Course Certificate' button...")
     try:
         soup = BeautifulSoup(response.content, "html5lib")
     except Exception:
@@ -57,8 +59,8 @@ def fetch_nptel(url: str) -> dict:
 
     if not certificate_link or not certificate_link.get("href"):
         all_links = [(a.get_text(strip=True), a.get("href", "")) for a in soup.find_all("a") if a.get_text(strip=True)]
-        log(f"Step 2: Button not found. Page links: {all_links[:10]}")
-        log(f"Step 2: Page text snippet: {response.text[:500]}")
+        logger.info(f"Step 2: Button not found. Page links: {all_links[:10]}")
+        logger.info(f"Step 2: Page text snippet: {response.text[:500]}")
         result["detail"] = (
             f"Could not find 'Course Certificate' button. "
             f"Links on page: {[l[0] for l in all_links[:8]]}"
@@ -68,7 +70,7 @@ def fetch_nptel(url: str) -> dict:
     # ── Step 3: Build PDF URL — exact same as verifier.py ────────────────────
     # working: full_pdf_url = "https://internalapp.nptel.ac.in" + pdf_path
     pdf_path = certificate_link["href"]
-    log(f"Step 2: raw href = {pdf_path}")
+    logger.info(f"Step 2: raw href = {pdf_path}")
 
     if pdf_path.startswith("http"):
         pdf_url = pdf_path
@@ -82,14 +84,14 @@ def fetch_nptel(url: str) -> dict:
         pdf_url = urljoin(response.url, pdf_path)
 
     result["pdf_url"] = pdf_url
-    log(f"Step 2: Full PDF URL → {pdf_url}")
+    logger.info(f"Step 2: Full PDF URL → {pdf_url}")
 
     # ── Step 4: Download PDF ──────────────────────────────────────────────────
-    log("Step 3: Downloading certificate PDF...")
+    logger.info("Step 3: Downloading certificate PDF...")
     tmp_path = None
     try:
         pdf_response = requests.get(pdf_url, headers=HEADERS, timeout=30)
-        log(f"Step 3: HTTP {pdf_response.status_code}  size={len(pdf_response.content)} bytes")
+        logger.info(f"Step 3: HTTP {pdf_response.status_code}  size={len(pdf_response.content)} bytes")
 
         if not pdf_response.ok:
             result["detail"] = f"PDF download failed (HTTP {pdf_response.status_code})."
@@ -98,18 +100,18 @@ def fetch_nptel(url: str) -> dict:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(pdf_response.content)
             tmp_path = tmp.name
-        log("Step 3: PDF saved")
+        logger.info("Step 3: PDF saved")
 
     except Exception as e:
-        log(f"Step 3 ERROR: {e}")
+        logger.info(f"Step 3 ERROR: {e}")
         result["detail"] = f"PDF download error: {e}"
         return result
 
     # ── Step 5: OCR ───────────────────────────────────────────────────────────
     try:
-        log("Step 4: Running OCR on official certificate PDF...")
+        logger.info("Step 4: Running OCR on official certificate PDF...")
         ocr = extract_text(tmp_path)
-        log(f"Step 4: OCR method={ocr['method']}  success={ocr['success']}  chars={len(ocr['text'])}")
+        logger.info(f"Step 4: OCR method={ocr['method']}  success={ocr['success']}  chars={len(ocr['text'])}")
 
         if not ocr["success"] or not ocr["text"].strip():
             result["detail"] = f"PDF downloaded but OCR produced no text. {ocr['detail']}"
@@ -120,7 +122,7 @@ def fetch_nptel(url: str) -> dict:
         result["success"]    = True
         result["detail"]     = f"Official PDF fetched & OCR'd via {ocr['method']}. {len(ocr['text'])} chars."
         result["fields"]     = _extract_fields(ocr["text"], pdf_url)
-        log(f"Step 4: Fields: {list(result['fields'].keys())}")
+        logger.info(f"Step 4: Fields: {list(result['fields'].keys())}")
 
     finally:
         if tmp_path and os.path.exists(tmp_path):
@@ -134,12 +136,12 @@ def _extract_fields(text: str, pdf_url: str) -> dict:
     """
     Extract exactly the 5 scored fields from real NPTEL certificate layout:
 
-      "This certificate is awarded to"
-      MOHAMED MUZAMMIL M                      ← candidate_name
-      "for successfully completing the course"
-      Programming in Java                     ← course_name
-      Jul-Oct 2024  (12 week course)          ← course_duration / issue_date
-      Roll No: NPTEL24CS105S1233103512        ← roll_or_cert_id
+    "This certificate is awarded to"
+    MOHAMED MUZAMMIL M                      ← candidate_name
+    "for successfully completing the course"
+    Programming in Java                     ← course_name
+    Jul-Oct 2024  (12 week course)          ← course_duration / issue_date
+    Roll No: NPTEL24CS105S1233103512        ← roll_or_cert_id
     """
     fields = {}
     patterns = {
@@ -192,7 +194,7 @@ def _extract_fields(text: str, pdf_url: str) -> dict:
 
     if "course_name" not in fields:
         m = re.search(r'\(\d+\s*week\s*course\)\s*([\w][\w\s,\-&:]+?)(?:\s*$|\n)',
-                      text, re.IGNORECASE | re.MULTILINE)
+                    text, re.IGNORECASE | re.MULTILINE)
         if m:
             fields["course_name"] = re.sub(r"\s+", " ", m.group(1).strip())
 

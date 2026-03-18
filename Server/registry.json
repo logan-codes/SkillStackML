@@ -1,0 +1,11 @@
+{
+  "nptel": {
+    "module": "workflows.nptel",
+    "display_name": "NPTEL Workflow",
+    "version": "1.0",
+    "required_fields": [
+      "path",
+      "verf_url"
+    ]
+  }
+}
