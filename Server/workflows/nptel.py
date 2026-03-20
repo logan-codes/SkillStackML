@@ -18,7 +18,9 @@ class NPTEL(Workflow):
     def __init__(self):
         super().__init__("nptel", "NPTEL Workflow", ["path","verf_url"])
         
-    def process(self, path: str, verf_url:str):
+    def process(self, payload: dict) -> dict:
+        path = payload["path"]
+        verf_url = payload.get("verf_url", "")
         response = {
             "uploaded_ocr": {"text":"","method":"none","success":False,"detail":""},
             "qr":           {"found":False,"url":"","data":"","method":"none","detail":""},
