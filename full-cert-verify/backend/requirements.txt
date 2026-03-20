@@ -1,0 +1,45 @@
+# ============================================================
+#  CertVerify — Python Dependencies
+#  Install with:  pip install -r requirements.txt
+# ============================================================
+
+# ── Web framework ────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# ── Config & env ────────────────────────────────────────────
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+
+# ── HTTP client ─────────────────────────────────────────────
+requests==2.31.0
+httpx==0.27.0
+
+# ── AI / Groq (Coursera + Udemy) ─────────────────────────────
+groq==0.9.0
+
+# ── PDF + image processing ──────────────────────────────────
+PyMuPDF==1.24.3
+Pillow==10.3.0
+
+# ── OCR  (NPTEL + CodeTantra) ────────────────────────────────
+pytesseract==0.3.10
+
+# ── Computer vision (NPTEL QR scanning) ─────────────────────
+numpy<2
+opencv-python-headless==4.9.0.80
+
+# ── QR code decoding (NPTEL) ────────────────────────────────
+pyzbar==0.1.9
+
+# ── HTML parsing (CodeTantra scraper + NPTEL fetcher) ────────
+beautifulsoup4==4.13.4
+html5lib==1.1
+lxml==5.2.2
+
+# ── Fuzzy string matching (NPTEL comparator) ─────────────────
+rapidfuzz==3.9.3
+
+# ── Optional: headless browser fallback (NPTEL) ──────────────
+# playwright==1.44.0   # uncomment + run: playwright install chromium

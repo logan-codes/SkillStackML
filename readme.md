@@ -13,6 +13,7 @@ Collaborators branch off from `dev`, add their own workflow system, and merge ba
 ---
 
 ## Branch Structure
+
 ```
 main        ← README only. The entry point. You are here.
 │
@@ -25,11 +26,12 @@ main        ← README only. The entry point. You are here.
     └── ...
 ```
 
-| Branch | Purpose | Contents |
-|--------|---------|----------|
-| `main` | Documentation hub | This README only |
-| `deploy` | Active deployment | The single current system in use |
-| `dev` | Experimentation base | All systems as organised folders |
+| Branch   | Purpose              | Contents                         |
+| -------- | -------------------- | -------------------------------- |
+| `main`   | Documentation hub    | This README only                 |
+| `deploy` | Active deployment    | The single current system in use |
+| `dev`    | Experimentation base | All systems as organised folders |
+
 ## How to Contribute a New System
 
 Think of `dev` as a shared lab bench. You take your own section of the bench (a branch), set up your experiment, and when you're done, you return your notes to the shared bench (merge back to `dev`).
@@ -37,6 +39,7 @@ Think of `dev` as a shared lab bench. You take your own section of the bench (a 
 ### Step-by-step
 
 **1. Branch from `dev`**
+
 ```bash
 git checkout dev
 git pull origin dev
@@ -46,6 +49,7 @@ git checkout -b your-system-name
 **2. Create a folder for your system**
 
 Add your system under a clearly named directory:
+
 ```
 dev/
 └── your-system-name/
@@ -58,12 +62,14 @@ dev/
 **3. Develop and document your system**
 
 Each system folder should include its own `README.md` covering:
+
 - System description and objective
 - ML model(s) used and configuration
 - How to run the pipeline
 - Results and observations
 
 **4. Merge back to `dev`**
+
 ```bash
 git add .
 git commit -m "feat: add [your-system-name] workflow"
@@ -126,4 +132,3 @@ git checkout dev
 # See all available systems
 ls
 ```
-
