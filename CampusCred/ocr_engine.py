@@ -68,9 +68,11 @@ class GLMOcr:
         self.processor.save_pretrained(self.local_path)
         self.model.save_pretrained(self.local_path)
 
-glm=GLMOcr()
-print(glm.device)
-ocr_chain = RunnableLambda(glm.ocr_glm)
 
-result = ocr_chain.invoke(r"C:\Users\logan\Downloads\WhatsApp Image 2026-03-26 at 13.37.09.jpeg")
-print(result)
+if __name__ == "__main__":
+    glm=GLMOcr()
+    print(glm.device)
+    ocr_chain = RunnableLambda(glm.ocr_glm)
+
+    result = ocr_chain.invoke(r"C:\Users\logan\Downloads\WhatsApp Image 2026-03-26 at 13.37.09.jpeg")
+    print(result)
