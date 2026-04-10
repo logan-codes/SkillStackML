@@ -1,0 +1,2754 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CertVerify — Multi-Platform Certificate Verification</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #060610;
+        --surface: #0d0d1f;
+        --surface2: #131328;
+        --surface3: #1a1a35;
+        --border: rgba(255, 255, 255, 0.07);
+        --text: #f0f0ff;
+        --muted: #7878a8;
+        --nptel: #ff6b35;
+        --nptel-dim: rgba(255, 107, 53, 0.12);
+        --ct: #00d4aa;
+        --ct-dim: rgba(0, 212, 170, 0.12);
+        --coursera: #0056d2;
+        --coursera-dim: rgba(0, 86, 210, 0.12);
+        --udemy: #a435f0;
+        --udemy-dim: rgba(164, 53, 240, 0.12);
+        --active: #fff;
+        --green: #00f5a0;
+        --red: #ff4d6d;
+        --green-dim: rgba(0, 245, 160, 0.08);
+        --red-dim: rgba(255, 77, 109, 0.08);
+        --radius: 16px;
+        --current-accent: #fff;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Outfit", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .bg-mesh {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .bg-mesh::before {
+        content: "";
+        position: absolute;
+        inset: -50%;
+        background:
+          radial-gradient(
+            ellipse 80% 60% at 20% 10%,
+            rgba(255, 107, 53, 0.07) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 60% 50% at 80% 20%,
+            rgba(0, 86, 210, 0.08) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            ellipse 70% 60% at 10% 80%,
+            rgba(0, 212, 170, 0.07) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 50% 40% at 90% 85%,
+            rgba(164, 53, 240, 0.08) 0%,
+            transparent 55%
+          );
+        animation: meshRotate 20s linear infinite;
+      }
+      @keyframes meshRotate {
+        0% {
+          transform: rotate(0deg) scale(1);
+        }
+        50% {
+          transform: rotate(180deg) scale(1.1);
+        }
+        100% {
+          transform: rotate(360deg) scale(1);
+        }
+      }
+      .bg-mesh::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.4;
+      }
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.025) 1px,
+            transparent 1px
+          );
+        background-size: 64px 64px;
+      }
+
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        filter: blur(80px);
+        opacity: 0.15;
+        animation: orbFloat 8s ease-in-out infinite;
+      }
+      .orb-1 {
+        width: 400px;
+        height: 400px;
+        background: var(--nptel);
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+      }
+      .orb-2 {
+        width: 300px;
+        height: 300px;
+        background: var(--coursera);
+        top: 20%;
+        right: -80px;
+        animation-delay: -3s;
+      }
+      .orb-3 {
+        width: 350px;
+        height: 350px;
+        background: var(--ct);
+        bottom: -50px;
+        left: 30%;
+        animation-delay: -6s;
+      }
+      .orb-4 {
+        width: 250px;
+        height: 250px;
+        background: var(--udemy);
+        bottom: 10%;
+        right: 10%;
+        animation-delay: -2s;
+      }
+      @keyframes orbFloat {
+        0%,
+        100% {
+          transform: translateY(0px) scale(1);
+        }
+        50% {
+          transform: translateY(-30px) scale(1.05);
+        }
+      }
+
+      .wrapper {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px 80px;
+      }
+
+      header {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 48px;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(20px);
+      }
+      .logo-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .logo-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--nptel), var(--udemy));
+        display: grid;
+        place-items: center;
+        box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        animation: logoPulse 3s ease-in-out infinite;
+      }
+      @keyframes logoPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 35px rgba(164, 53, 240, 0.4);
+        }
+      }
+      .logo-icon svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+      }
+      .logo-text {
+        font-family: "Syne", sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+      .logo-text span {
+        background: linear-gradient(90deg, var(--nptel), var(--udemy));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .logo-sub {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .header-pill {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--green);
+        background: rgba(0, 245, 160, 0.08);
+        border: 1px solid rgba(0, 245, 160, 0.2);
+        padding: 6px 14px;
+        border-radius: 999px;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulseDot 1.5s ease-in-out infinite;
+      }
+      @keyframes pulseDot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.7);
+        }
+      }
+
+      .hero {
+        text-align: center;
+        padding: 72px 0 56px;
+        animation: heroIn 0.8s ease both;
+      }
+      @keyframes heroIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 24px;
+        border: 1px solid var(--border);
+        padding: 6px 16px;
+        border-radius: 999px;
+        background: var(--surface);
+      }
+      .hero h1 {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(52px, 8vw, 96px);
+        font-weight: 800;
+        line-height: 0.9;
+        letter-spacing: -2px;
+        margin-bottom: 24px;
+      }
+      .hero h1 .line1 {
+        display: block;
+        background: linear-gradient(135deg, #fff 30%, rgba(255, 255, 255, 0.5));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .hero h1 .line2 {
+        display: block;
+        background: linear-gradient(
+          90deg,
+          var(--nptel) 0%,
+          var(--ct) 33%,
+          var(--coursera) 66%,
+          var(--udemy) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradientShift 4s ease-in-out infinite;
+        background-size: 200% 100%;
+      }
+      @keyframes gradientShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+      .hero p {
+        font-size: 17px;
+        color: var(--muted);
+        max-width: 500px;
+        margin: 0 auto;
+        line-height: 1.7;
+      }
+
+      .stats-strip {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        margin-bottom: 48px;
+        animation: heroIn 0.8s 0.1s ease both;
+        opacity: 0;
+      }
+      .stat {
+        text-align: center;
+        padding: 12px 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .stat::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+      }
+      .stat.nptel::before {
+        background: var(--nptel);
+      }
+      .stat.ct::before {
+        background: var(--ct);
+      }
+      .stat.coursera::before {
+        background: var(--coursera);
+      }
+      .stat.udemy::before {
+        background: var(--udemy);
+      }
+      .stat-num {
+        font-family: "Syne", sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .stat-lbl {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+        animation: heroIn 0.8s 0.2s ease both;
+        opacity: 0;
+        position: relative;
+      }
+      .card-top-glow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--current-accent),
+          transparent
+        );
+        opacity: 0.6;
+        transition: all 0.5s ease;
+      }
+      .card-inner {
+        padding: 40px;
+      }
+
+      .upload-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+        display: block;
+      }
+      .drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 56px 32px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .drop-zone::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at center,
+          var(--current-accent),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .drop-zone:hover::before,
+      .drop-zone.drag-over::before {
+        opacity: 0.04;
+      }
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .drop-zone input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .upload-icon-wrap {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        position: relative;
+        background: var(--surface2);
+        display: grid;
+        place-items: center;
+      }
+      .upload-icon-wrap::before {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--nptel),
+          var(--ct),
+          var(--coursera),
+          var(--udemy),
+          var(--nptel)
+        );
+        z-index: -1;
+        opacity: 0.5;
+        animation: spinRing 4s linear infinite;
+      }
+      @keyframes spinRing {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .upload-icon-wrap svg {
+        width: 32px;
+        height: 32px;
+        stroke: var(--text);
+        opacity: 0.7;
+      }
+      .drop-title {
+        font-family: "Syne", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .drop-sub {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .drop-sub span {
+        color: var(--text);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .drop-formats {
+        margin-top: 16px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .file-preview {
+        display: none;
+        align-items: center;
+        gap: 16px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 16px;
+      }
+      .file-preview.show {
+        display: flex;
+        animation: slideIn 0.3s ease;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .file-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: var(--surface3);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        border: 1px solid var(--border);
+      }
+      .file-thumb svg {
+        width: 22px;
+        height: 22px;
+        stroke: var(--muted);
+      }
+      .file-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .file-name {
+        font-weight: 500;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .file-size {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .file-remove {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: transparent;
+        border: 1px solid var(--border);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .file-remove:hover {
+        background: var(--red-dim);
+        border-color: var(--red);
+      }
+      .file-remove svg {
+        width: 14px;
+        height: 14px;
+        stroke: var(--muted);
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 32px 0 28px;
+      }
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+      .divider-text {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .platform-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+        display: block;
+      }
+      .platforms {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .platform-btn {
+        position: relative;
+        cursor: pointer;
+        background: var(--surface2);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 20px 12px 16px;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        overflow: hidden;
+      }
+      .platform-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--platform-color, #fff);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .platform-btn:hover {
+        transform: translateY(-3px);
+      }
+      .platform-btn:hover::before {
+        opacity: 0.04;
+      }
+      .platform-btn.active {
+        border-color: var(--platform-color, #fff);
+        transform: translateY(-4px);
+        box-shadow:
+          0 12px 32px rgba(0, 0, 0, 0.3),
+          0 0 0 1px var(--platform-color, #fff);
+      }
+      .platform-btn.active::before {
+        opacity: 0.08;
+      }
+      .platform-btn[data-platform="nptel"] {
+        --platform-color: var(--nptel);
+      }
+      .platform-btn[data-platform="codetantra"] {
+        --platform-color: var(--ct);
+      }
+      .platform-btn[data-platform="coursera"] {
+        --platform-color: var(--coursera);
+      }
+      .platform-btn[data-platform="udemy"] {
+        --platform-color: var(--udemy);
+      }
+
+      .platform-logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        margin: 0 auto 12px;
+        display: grid;
+        place-items: center;
+        position: relative;
+        z-index: 1;
+        transition: transform 0.3s;
+      }
+      .platform-btn:hover .platform-logo,
+      .platform-btn.active .platform-logo {
+        transform: scale(1.1);
+      }
+      .platform-btn[data-platform="nptel"] .platform-logo {
+        background: var(--nptel-dim);
+        color: var(--nptel);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+      }
+      .platform-btn[data-platform="codetantra"] .platform-logo {
+        background: var(--ct-dim);
+        color: var(--ct);
+        border: 1px solid rgba(0, 212, 170, 0.2);
+      }
+      .platform-btn[data-platform="coursera"] .platform-logo {
+        background: var(--coursera-dim);
+        color: var(--coursera);
+        border: 1px solid rgba(0, 86, 210, 0.2);
+      }
+      .platform-btn[data-platform="udemy"] .platform-logo {
+        background: var(--udemy-dim);
+        color: var(--udemy);
+        border: 1px solid rgba(164, 53, 240, 0.2);
+      }
+
+      .platform-name {
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 1;
+        transition: color 0.3s;
+      }
+      .platform-btn[data-platform="nptel"].active .platform-name {
+        color: var(--nptel);
+      }
+      .platform-btn[data-platform="codetantra"].active .platform-name {
+        color: var(--ct);
+      }
+      .platform-btn[data-platform="coursera"].active .platform-name {
+        color: var(--coursera);
+      }
+      .platform-btn[data-platform="udemy"].active .platform-name {
+        color: var(--udemy);
+      }
+
+      /* Animated dots replacing text tags */
+      .platform-tag {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .ptag-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--platform-color, #888);
+        opacity: 0.3;
+        animation: tagDot 1.6s ease-in-out infinite;
+      }
+      .ptag-dot:nth-child(2) {
+        animation-delay: 0.28s;
+      }
+      .ptag-dot:nth-child(3) {
+        animation-delay: 0.56s;
+      }
+      @keyframes tagDot {
+        0%,
+        70%,
+        100% {
+          transform: scale(1);
+          opacity: 0.3;
+        }
+        35% {
+          transform: scale(1.6);
+          opacity: 1;
+        }
+      }
+      .platform-btn.active .ptag-dot {
+        opacity: 0.7;
+        animation: tagDotActive 1.2s ease-in-out infinite;
+      }
+      .platform-btn.active .ptag-dot:nth-child(2) {
+        animation-delay: 0.22s;
+      }
+      .platform-btn.active .ptag-dot:nth-child(3) {
+        animation-delay: 0.44s;
+      }
+      @keyframes tagDotActive {
+        0%,
+        70%,
+        100% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+        35% {
+          transform: scale(1.8);
+          opacity: 1;
+          box-shadow: 0 0 5px var(--platform-color, #888);
+        }
+      }
+
+      .platform-check {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+      }
+      .platform-btn[data-platform="nptel"].active .platform-check {
+        background: var(--nptel);
+        opacity: 1;
+      }
+      .platform-btn[data-platform="codetantra"].active .platform-check {
+        background: var(--ct);
+        opacity: 1;
+      }
+      .platform-btn[data-platform="coursera"].active .platform-check {
+        background: var(--coursera);
+        opacity: 1;
+      }
+      .platform-btn[data-platform="udemy"].active .platform-check {
+        background: var(--udemy);
+        opacity: 1;
+      }
+      .platform-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 0 0 14px 14px;
+      }
+      .platform-btn[data-platform="nptel"] .platform-bar {
+        background: var(--nptel);
+      }
+      .platform-btn[data-platform="codetantra"] .platform-bar {
+        background: var(--ct);
+      }
+      .platform-btn[data-platform="coursera"] .platform-bar {
+        background: var(--coursera);
+      }
+      .platform-btn[data-platform="udemy"] .platform-bar {
+        background: var(--udemy);
+      }
+      .platform-btn.active .platform-bar {
+        opacity: 1;
+      }
+
+      .platform-info {
+        display: none;
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-size: 13px;
+        border: 1px solid;
+        animation: slideIn 0.3s ease;
+        align-items: center;
+        gap: 10px;
+      }
+      .platform-info.show {
+        display: flex;
+      }
+      .platform-info svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .platform-info-text {
+        flex: 1;
+      }
+      .platform-info-text strong {
+        font-weight: 600;
+      }
+      #info-nptel {
+        background: var(--nptel-dim);
+        border-color: rgba(255, 107, 53, 0.2);
+        color: var(--nptel);
+      }
+      #info-codetantra {
+        background: var(--ct-dim);
+        border-color: rgba(0, 212, 170, 0.2);
+        color: var(--ct);
+      }
+      #info-coursera {
+        background: var(--coursera-dim);
+        border-color: rgba(0, 86, 210, 0.2);
+        color: var(--coursera);
+      }
+      #info-udemy {
+        background: var(--udemy-dim);
+        border-color: rgba(164, 53, 240, 0.2);
+        color: var(--udemy);
+      }
+
+      .verify-btn {
+        width: 100%;
+        margin-top: 28px;
+        padding: 20px;
+        background: linear-gradient(
+          135deg,
+          #fff 0%,
+          rgba(255, 255, 255, 0.85) 100%
+        );
+        color: var(--bg);
+        border: none;
+        border-radius: 14px;
+        font-family: "Syne", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .verify-btn:disabled {
+        background: var(--surface3);
+        color: var(--muted);
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+        border: 1px solid var(--border);
+      }
+      .verify-btn:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 40px rgba(255, 255, 255, 0.15);
+      }
+      .verify-btn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        animation: btnShimmer 2.5s infinite;
+      }
+      .verify-btn:disabled::after {
+        display: none;
+      }
+      @keyframes btnShimmer {
+        to {
+          left: 200%;
+        }
+      }
+
+      .loading-wrap {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 0;
+        gap: 24px;
+        text-align: center;
+      }
+      .loading-wrap.show {
+        display: flex;
+      }
+      .loader-ring {
+        width: 72px;
+        height: 72px;
+        position: relative;
+      }
+      .loader-ring svg {
+        width: 72px;
+        height: 72px;
+        animation: spinRing 1s linear infinite;
+        transform-origin: center;
+      }
+      .loader-ring circle {
+        fill: none;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-dasharray: 60 160;
+        stroke-dashoffset: 0;
+      }
+      .loader-ring .track {
+        stroke: var(--surface3);
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+      }
+      .loading-title {
+        font-family: "Syne", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+      }
+      .loading-steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .loading-step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        opacity: 0.4;
+        transition: all 0.4s;
+      }
+      .loading-step-item.active {
+        opacity: 1;
+        color: var(--text);
+      }
+      .loading-step-item.done {
+        opacity: 0.6;
+        color: var(--green);
+      }
+      .step-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        flex-shrink: 0;
+        transition: all 0.3s;
+      }
+      .loading-step-item.active .step-dot {
+        background: var(--current-accent);
+        animation: pulseDot 1s infinite;
+      }
+      .loading-step-item.done .step-dot {
+        background: var(--green);
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(12px);
+        display: none;
+        place-items: center;
+        padding: 24px;
+      }
+      .modal-backdrop.show {
+        display: grid;
+      }
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .modal-top-bar {
+        height: 4px;
+        border-radius: 24px 24px 0 0;
+      }
+      .modal-top-bar.genuine {
+        background: linear-gradient(90deg, var(--green), #00c896);
+      }
+      .modal-top-bar.fake {
+        background: linear-gradient(90deg, var(--red), #c0392b);
+      }
+      .modal-top-bar.retry {
+        background: linear-gradient(90deg, #f0a500, #e67e22);
+      }
+      .modal-top-bar.error {
+        background: linear-gradient(90deg, var(--red), #8e44ad);
+      }
+      .modal-head {
+        padding: 32px 32px 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .modal-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        z-index: 1;
+      }
+      .modal-close:hover {
+        background: var(--surface3);
+      }
+      .modal-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: var(--muted);
+      }
+      .verdict-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .verdict-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      .verdict-badge.genuine {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid rgba(0, 245, 160, 0.2);
+      }
+      .verdict-badge.fake {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(255, 77, 109, 0.2);
+      }
+      .verdict-badge.retry {
+        background: rgba(240, 165, 0, 0.1);
+        color: #f0a500;
+        border: 1px solid rgba(240, 165, 0, 0.2);
+      }
+      .platform-badge {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        letter-spacing: 1px;
+      }
+      .modal-title {
+        font-family: "Syne", sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+      .modal-cert-id {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .modal-body {
+        padding: 28px 32px 32px;
+      }
+      .section-head {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+      .cmp-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 28px;
+      }
+      .cmp-table th {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+      .cmp-table td {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: top;
+      }
+      .cmp-table tr:last-child td {
+        border-bottom: none;
+      }
+      .cmp-table td:first-child {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        white-space: nowrap;
+        width: 90px;
+      }
+      .field-val {
+        font-size: 13px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-family: "JetBrains Mono", monospace;
+        word-break: break-all;
+        color: var(--text);
+      }
+      .field-val.empty {
+        color: var(--muted);
+        font-style: italic;
+      }
+      .field-val.uploaded {
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .field-val.official {
+        border-color: rgba(0, 245, 160, 0.1);
+      }
+      .match-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .match-icon.pass {
+        background: var(--green-dim);
+        color: var(--green);
+      }
+      .match-icon.fail {
+        background: var(--red-dim);
+        color: var(--red);
+      }
+      .score-section {
+        margin-bottom: 20px;
+      }
+      .score-header {
+        display: flex;
+        justify-content: space-between;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .score-track {
+        height: 8px;
+        background: var(--surface2);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .score-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .score-fill.full {
+        background: linear-gradient(90deg, var(--green), #00c896);
+      }
+      .score-fill.half {
+        background: linear-gradient(90deg, #f0a500, #e67e22);
+      }
+      .score-fill.low {
+        background: linear-gradient(90deg, var(--red), #c0392b);
+      }
+      .verify-link-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 16px;
+      }
+      .verify-link-row a {
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: none;
+        font-family: "JetBrains Mono", monospace;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .verify-link-row a:hover {
+        color: var(--text);
+      }
+      .link-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+      .retry-btn {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        font-family: "Syne", sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        cursor: pointer;
+        margin-top: 12px;
+        transition: all 0.2s;
+        background: var(--surface3);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .retry-btn:hover {
+        background: var(--surface2);
+      }
+
+      footer {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 32px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1px;
+        border-top: 1px solid var(--border);
+      }
+      .footer-platforms {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 12px;
+      }
+      .fp {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .fp-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      @media (max-width: 640px) {
+        header {
+          padding: 16px 20px;
+        }
+        .card-inner {
+          padding: 24px 20px;
+        }
+        .platforms {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .hero h1 {
+          font-size: 48px;
+        }
+        .stats-strip {
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .modal-head,
+        .modal-body {
+          padding: 24px 20px;
+        }
+      }
+
+      /* ═══ DEEP-SPACE OVERLAY ═══ */
+      #bg-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+      #cursor-glow {
+        position: fixed;
+        width: 480px;
+        height: 480px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(0, 190, 255, 0.055) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: 1;
+        transform: translate(-50%, -50%);
+        transition: background 0.5s;
+        mix-blend-mode: screen;
+      }
+      .bg-mesh,
+      .bg-grid,
+      .orb {
+        display: none !important;
+      }
+      body {
+        background: #020210 !important;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse 70% 55% at 15% 10%,
+            rgba(0, 80, 220, 0.07) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 55% 45% at 85% 85%,
+            rgba(120, 0, 255, 0.07) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            ellipse 40% 35% at 55% 45%,
+            rgba(0, 200, 255, 0.03) 0%,
+            transparent 60%
+          );
+      }
+      header,
+      .wrapper,
+      footer {
+        position: relative;
+        z-index: 2;
+      }
+      header {
+        background: rgba(2, 2, 20, 0.65) !important;
+        backdrop-filter: blur(24px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+      }
+      .card {
+        background: rgba(8, 8, 32, 0.55) !important;
+        backdrop-filter: blur(22px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.07) !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.04),
+          0 0 80px rgba(0, 120, 255, 0.06),
+          0 40px 80px rgba(0, 0, 0, 0.75) !important;
+      }
+      .card-top-glow {
+        opacity: 1 !important;
+      }
+      .drop-zone {
+        background: rgba(255, 255, 255, 0.018) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 0 40px rgba(0, 200, 255, 0.06) !important;
+      }
+      .file-preview {
+        background: rgba(19, 19, 52, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+      }
+      .platform-btn {
+        background: rgba(15, 15, 45, 0.55) !important;
+        backdrop-filter: blur(12px) !important;
+      }
+      .platform-btn:hover {
+        transform: translateY(-4px) !important;
+        box-shadow:
+          0 0 24px rgba(255, 255, 255, 0.07),
+          0 12px 28px rgba(0, 0, 0, 0.45) !important;
+      }
+      .platform-btn[data-platform="nptel"].active {
+        box-shadow:
+          0 0 32px rgba(255, 107, 53, 0.28),
+          0 12px 32px rgba(0, 0, 0, 0.45) !important;
+      }
+      .platform-btn[data-platform="codetantra"].active {
+        box-shadow:
+          0 0 32px rgba(0, 212, 170, 0.28),
+          0 12px 32px rgba(0, 0, 0, 0.45) !important;
+      }
+      .platform-btn[data-platform="coursera"].active {
+        box-shadow:
+          0 0 32px rgba(0, 86, 210, 0.28),
+          0 12px 32px rgba(0, 0, 0, 0.45) !important;
+      }
+      .platform-btn[data-platform="udemy"].active {
+        box-shadow:
+          0 0 32px rgba(164, 53, 240, 0.28),
+          0 12px 32px rgba(0, 0, 0, 0.45) !important;
+      }
+      .platform-info {
+        backdrop-filter: blur(12px) !important;
+      }
+      .verify-btn:not(:disabled) {
+        box-shadow:
+          0 0 40px rgba(255, 255, 255, 0.12),
+          0 8px 32px rgba(0, 0, 0, 0.5) !important;
+      }
+      .verify-btn:not(:disabled):hover {
+        transform: translateY(-3px) scale(1.01) !important;
+        box-shadow:
+          0 0 60px rgba(255, 255, 255, 0.2),
+          0 16px 48px rgba(0, 0, 0, 0.5) !important;
+      }
+      .stat {
+        background: rgba(13, 13, 40, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+      }
+      .modal-backdrop {
+        background: rgba(0, 0, 8, 0.82) !important;
+        backdrop-filter: blur(20px) !important;
+      }
+      .modal {
+        background: rgba(8, 8, 32, 0.75) !important;
+        backdrop-filter: blur(28px) saturate(160%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.05),
+          0 0 100px rgba(0, 100, 255, 0.08),
+          0 48px 96px rgba(0, 0, 0, 0.85) !important;
+      }
+      .field-val {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      .field-val.official {
+        border-color: rgba(0, 245, 160, 0.15) !important;
+      }
+      footer {
+        background: rgba(2, 2, 18, 0.6) !important;
+        backdrop-filter: blur(16px) !important;
+      }
+      .verify-link-row {
+        background: rgba(19, 19, 52, 0.6) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+      .hero-tag {
+        background: rgba(13, 13, 40, 0.65) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+      :root {
+        --surface: rgba(10, 10, 28, 0.55);
+        --surface2: rgba(16, 16, 38, 0.65);
+        --surface3: rgba(22, 22, 50, 0.7);
+      }
+
+      /* Extra animations */
+      .card {
+        animation:
+          heroIn 0.8s 0.2s ease both,
+          cardFloat 7s 1s ease-in-out infinite !important;
+      }
+      @keyframes cardFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+      .platform-btn.active {
+        animation: neonFlicker 4s ease-in-out infinite;
+      }
+      @keyframes neonFlicker {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        92% {
+          opacity: 1;
+        }
+        93% {
+          opacity: 0.82;
+        }
+        94% {
+          opacity: 1;
+        }
+        96% {
+          opacity: 0.9;
+        }
+        97% {
+          opacity: 1;
+        }
+      }
+      .hero h1 .line1 {
+        background: linear-gradient(
+          105deg,
+          rgba(255, 255, 255, 0.5) 0%,
+          #fff 30%,
+          rgba(255, 255, 255, 0.6) 50%,
+          rgba(255, 255, 255, 1) 55%,
+          rgba(255, 255, 255, 0.6) 60%,
+          rgba(255, 255, 255, 0.4) 100%
+        );
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: heroShimmer 4s ease-in-out infinite;
+      }
+      @keyframes heroShimmer {
+        0% {
+          background-position: 150% center;
+        }
+        100% {
+          background-position: -50% center;
+        }
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        top: 10%;
+        left: -10%;
+        width: 2px;
+        height: 2px;
+        background: #fff;
+        box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.8);
+        animation: shootingStar 9s linear infinite;
+        pointer-events: none;
+        z-index: 1;
+        border-radius: 50%;
+      }
+      @keyframes shootingStar {
+        0% {
+          transform: translate(0, 0) rotate(20deg);
+          opacity: 0;
+        }
+        5% {
+          opacity: 1;
+        }
+        30% {
+          transform: translate(840px, 240px) rotate(20deg);
+          opacity: 0;
+        }
+        100% {
+          transform: translate(840px, 240px) rotate(20deg);
+          opacity: 0;
+        }
+      }
+      .upload-icon-wrap::before {
+        animation:
+          spinRing 3s linear infinite,
+          ringGlow 2.5s ease-in-out infinite alternate !important;
+      }
+      @keyframes ringGlow {
+        from {
+          opacity: 0.4;
+          filter: brightness(1);
+        }
+        to {
+          opacity: 0.9;
+          filter: brightness(1.4);
+        }
+      }
+      .drop-zone::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 200, 255, 0.6),
+          transparent
+        );
+        top: -2px;
+        border-radius: 2px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        animation: scanLine 2.5s linear infinite;
+        animation-play-state: paused;
+        pointer-events: none;
+      }
+      .drop-zone:hover::after {
+        opacity: 1;
+        animation-play-state: running;
+      }
+      @keyframes scanLine {
+        0% {
+          top: 0%;
+        }
+        100% {
+          top: 100%;
+        }
+      }
+      .platform-btn.active .platform-logo {
+        animation: logoBounce 0.5s cubic-bezier(0.34, 1.8, 0.64, 1) forwards;
+      }
+      @keyframes logoBounce {
+        0% {
+          transform: scale(1);
+        }
+        60% {
+          transform: scale(1.25);
+        }
+        100% {
+          transform: scale(1.1);
+        }
+      }
+      .verify-btn:not(:disabled) {
+        animation: btnBreathe 3s ease-in-out infinite !important;
+      }
+      .verify-btn:not(:disabled):hover {
+        animation: none !important;
+        transform: translateY(-3px) scale(1.01) !important;
+        box-shadow:
+          0 0 70px rgba(255, 255, 255, 0.25),
+          0 16px 48px rgba(0, 0, 0, 0.5) !important;
+      }
+      @keyframes btnBreathe {
+        0%,
+        100% {
+          box-shadow:
+            0 0 30px rgba(255, 255, 255, 0.08),
+            0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+        50% {
+          box-shadow:
+            0 0 55px rgba(255, 255, 255, 0.18),
+            0 12px 36px rgba(0, 0, 0, 0.5);
+        }
+      }
+      .stats-strip {
+        opacity: 0;
+        animation: heroIn 0.8s 0.15s ease both;
+      }
+      .stat:nth-child(1) {
+        animation: statSlide 0.6s 0.2s ease both;
+      }
+      .stat:nth-child(2) {
+        animation: statSlide 0.6s 0.35s ease both;
+      }
+      .stat:nth-child(3) {
+        animation: statSlide 0.6s 0.5s ease both;
+      }
+      .stat:nth-child(4) {
+        animation: statSlide 0.6s 0.65s ease both;
+      }
+      @keyframes statSlide {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .header-pill {
+        animation: pillGlow 3s ease-in-out infinite;
+      }
+      @keyframes pillGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 0 rgba(0, 245, 160, 0);
+        }
+        50% {
+          box-shadow: 0 0 16px rgba(0, 245, 160, 0.2);
+        }
+      }
+      @keyframes modalIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.88) translateY(28px);
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.02) translateY(-4px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .upload-label {
+        animation: sectionReveal 0.5s 0.4s ease both;
+        opacity: 0;
+      }
+      .drop-zone {
+        animation: sectionReveal 0.5s 0.5s ease both;
+        opacity: 0;
+      }
+      .divider {
+        animation: sectionReveal 0.5s 0.6s ease both;
+        opacity: 0;
+      }
+      .platform-label {
+        animation: sectionReveal 0.5s 0.65s ease both;
+        opacity: 0;
+      }
+      .platforms {
+        animation: sectionReveal 0.5s 0.7s ease both;
+        opacity: 0;
+      }
+      @keyframes sectionReveal {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .logo-icon {
+        animation:
+          logoPulse 3s ease-in-out infinite,
+          logoHue 8s linear infinite !important;
+      }
+      @keyframes logoHue {
+        0% {
+          filter: hue-rotate(0deg);
+        }
+        100% {
+          filter: hue-rotate(360deg);
+        }
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        bottom: -1px;
+        border-radius: 25px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 200, 255, 0.12) 0%,
+          transparent 40%,
+          transparent 60%,
+          rgba(160, 80, 255, 0.1) 100%
+        );
+        z-index: 0;
+        pointer-events: none;
+        animation: cardCornerGlow 6s ease-in-out infinite alternate;
+      }
+      @keyframes cardCornerGlow {
+        from {
+          opacity: 0.6;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .hero-tag {
+        animation:
+          heroIn 0.6s 0s ease both,
+          tagFloat 5s 1s ease-in-out infinite !important;
+      }
+      @keyframes tagFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </head>
+  <body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="cursor-glow"></div>
+    <div class="bg-mesh"></div>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+
+    <header>
+      <div class="logo-wrap">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            />
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text"><span>CertVerify</span></div>
+          <div class="logo-sub">Multi-Platform Authenticator</div>
+        </div>
+      </div>
+      <div class="header-pill">
+        <div class="pulse-dot"></div>
+        AI POWERED · 4 PLATFORMS
+      </div>
+    </header>
+
+    <div class="wrapper">
+      <div class="hero">
+        <div class="hero-tag">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4l3 3" />
+          </svg>
+          Instant Certificate Authentication
+        </div>
+        <h1>
+          <span class="line1">VERIFY YOUR</span
+          ><span class="line2">CERTIFICATE</span>
+        </h1>
+        <p>
+          Upload any certificate from NPTEL, CodeTantra, Coursera, or Udemy and
+          our AI will authenticate it against official records in seconds.
+        </p>
+      </div>
+
+      <div class="stats-strip">
+        <div class="stat nptel">
+          <div class="stat-num" style="color: var(--nptel)">OCR</div>
+          <div class="stat-lbl">NPTEL</div>
+        </div>
+        <div class="stat ct">
+          <div class="stat-num" style="color: var(--ct)">SCRAPE</div>
+          <div class="stat-lbl">CodeTantra</div>
+        </div>
+        <div class="stat coursera">
+          <div class="stat-num" style="color: var(--coursera)">AI</div>
+          <div class="stat-lbl">Coursera</div>
+        </div>
+        <div class="stat udemy">
+          <div class="stat-num" style="color: var(--udemy)">VISION</div>
+          <div class="stat-lbl">Udemy</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top-glow" id="cardGlow"></div>
+        <div class="card-inner">
+          <span class="upload-label">01 — Upload Certificate</span>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" />
+            <div class="upload-icon-wrap">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div class="drop-title">Drop your certificate here</div>
+            <div class="drop-sub">or <span>click to browse</span></div>
+            <div class="drop-formats">
+              PDF · JPG · PNG &nbsp;·&nbsp; Max 10MB
+            </div>
+          </div>
+
+          <div class="file-preview" id="filePreview">
+            <div class="file-thumb">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </div>
+            <div class="file-info">
+              <div class="file-name" id="fileName">—</div>
+              <div class="file-size" id="fileSize">—</div>
+            </div>
+            <button class="file-remove" id="fileRemove">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="divider">
+            <div class="divider-line"></div>
+            <div class="divider-text">Select Platform</div>
+            <div class="divider-line"></div>
+          </div>
+
+          <span class="platform-label">02 — Choose Your Platform</span>
+          <div class="platforms">
+            <div
+              class="platform-btn"
+              data-platform="nptel"
+              onclick="selectPlatform('nptel')"
+            >
+              <div class="platform-check">✓</div>
+              <div class="platform-bar"></div>
+              <div class="platform-logo">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+              </div>
+              <div class="platform-name">NPTEL</div>
+              <div class="platform-tag">
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+              </div>
+            </div>
+            <div
+              class="platform-btn"
+              data-platform="codetantra"
+              onclick="selectPlatform('codetantra')"
+            >
+              <div class="platform-check">✓</div>
+              <div class="platform-bar"></div>
+              <div class="platform-logo">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+              <div class="platform-name">CodeTantra</div>
+              <div class="platform-tag">
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+              </div>
+            </div>
+            <div
+              class="platform-btn"
+              data-platform="coursera"
+              onclick="selectPlatform('coursera')"
+            >
+              <div class="platform-check">✓</div>
+              <div class="platform-bar"></div>
+              <div class="platform-logo">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon
+                    points="10 8 16 12 10 16 10 8"
+                    fill="currentColor"
+                    opacity=".35"
+                  />
+                </svg>
+              </div>
+              <div class="platform-name">Coursera</div>
+              <div class="platform-tag">
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+              </div>
+            </div>
+            <div
+              class="platform-btn"
+              data-platform="udemy"
+              onclick="selectPlatform('udemy')"
+            >
+              <div class="platform-check">✓</div>
+              <div class="platform-bar"></div>
+              <div class="platform-logo">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                    fill="currentColor"
+                    opacity=".25"
+                  />
+                </svg>
+              </div>
+              <div class="platform-name">Udemy</div>
+              <div class="platform-tag">
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+                <div class="ptag-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="platform-info" id="info-nptel">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4m0 4h.01" />
+            </svg>
+            <div class="platform-info-text">
+              <strong>NPTEL:</strong> OCR + QR code scanning → official NPTEL
+              page → downloads PDF → compares 5 fields with weighted scoring.
+            </div>
+          </div>
+          <div class="platform-info" id="info-codetantra">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4m0 4h.01" />
+            </svg>
+            <div class="platform-info-text">
+              <strong>CodeTantra:</strong> Extracts Certificate ID via OCR →
+              scrapes Sathyabama portal with 3-retry logic → verifies name,
+              course and date.
+            </div>
+          </div>
+          <div class="platform-info" id="info-coursera">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4m0 4h.01" />
+            </svg>
+            <div class="platform-info-text">
+              <strong>Coursera:</strong> Groq Vision AI reads the certificate →
+              downloads official S3 image → AI semantic comparison of name,
+              course and date.
+            </div>
+          </div>
+          <div class="platform-info" id="info-udemy">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4m0 4h.01" />
+            </svg>
+            <div class="platform-info-text">
+              <strong>Udemy:</strong> Vision AI extracts UC- certificate ID →
+              downloads official Udemy S3 image → compares all 4 fields with AI
+              semantic matching.
+            </div>
+          </div>
+
+          <div class="loading-wrap" id="loadingWrap">
+            <div class="loader-ring">
+              <svg viewBox="0 0 72 72">
+                <circle class="track" cx="36" cy="36" r="30" />
+                <circle id="loaderArc" cx="36" cy="36" r="30" stroke="white" />
+              </svg>
+            </div>
+            <div class="loading-title" id="loadingTitle">VERIFYING</div>
+            <div class="loading-steps-list" id="loadingSteps"></div>
+          </div>
+
+          <button
+            class="verify-btn"
+            id="verifyBtn"
+            disabled
+            onclick="verifyCertificate()"
+          >
+            SELECT PLATFORM TO CONTINUE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-platforms">
+        <div class="fp">
+          <div class="fp-dot" style="background: var(--nptel)"></div>
+          NPTEL
+        </div>
+        <div class="fp">
+          <div class="fp-dot" style="background: var(--ct)"></div>
+          CODETANTRA
+        </div>
+        <div class="fp">
+          <div class="fp-dot" style="background: var(--coursera)"></div>
+          COURSERA
+        </div>
+        <div class="fp">
+          <div class="fp-dot" style="background: var(--udemy)"></div>
+          UDEMY
+        </div>
+      </div>
+      <div>
+        CertVerify · AI-Powered Certificate Authentication · All platforms
+        supported
+      </div>
+    </footer>
+
+    <div
+      class="modal-backdrop"
+      id="modalBackdrop"
+      onclick="closeModalOutside(event)"
+    >
+      <div class="modal" id="modal">
+        <div class="modal-top-bar" id="modalTopBar"></div>
+        <div class="modal-head" id="modalHead">
+          <button class="modal-close" onclick="closeModal()">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000";
+      let selectedFile = null;
+      let selectedPlatform = null;
+
+      const PLATFORM_COLORS = {
+        nptel: "var(--nptel)",
+        codetantra: "var(--ct)",
+        coursera: "var(--coursera)",
+        udemy: "var(--udemy)",
+      };
+      const PLATFORM_NAMES = {
+        nptel: "NPTEL",
+        codetantra: "CodeTantra",
+        coursera: "Coursera",
+        udemy: "Udemy",
+      };
+      const PLATFORM_STEPS = {
+        nptel: [
+          "Converting certificate...",
+          "Running OCR engine...",
+          "Scanning QR code...",
+          "Fetching NPTEL portal...",
+          "Downloading official PDF...",
+          "Comparing 5 fields...",
+        ],
+        codetantra: [
+          "Converting certificate...",
+          "Running OCR engine...",
+          "Extracting Certificate ID...",
+          "Scraping portal (attempt 1)...",
+          "Parsing official fields...",
+          "Comparing fields...",
+        ],
+        coursera: [
+          "Converting to image...",
+          "Sending to Vision AI...",
+          "Extracting fields...",
+          "Downloading official S3 image...",
+          "Vision AI on official...",
+          "AI semantic comparison...",
+        ],
+        udemy: [
+          "Converting to image...",
+          "Sending to Vision AI...",
+          "Extracting UC- cert ID...",
+          "Downloading official S3 image...",
+          "Vision AI on official...",
+          "AI semantic comparison...",
+        ],
+      };
+      const PLATFORM_GRADIENTS = {
+        nptel: "linear-gradient(135deg,#FF6B35,#e55a28)",
+        codetantra: "linear-gradient(135deg,#00D4AA,#00a88a)",
+        coursera: "linear-gradient(135deg,#0056D2,#0041a8)",
+        udemy: "linear-gradient(135deg,#A435F0,#8520d0)",
+      };
+
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+      dropZone.addEventListener("dragleave", () =>
+        dropZone.classList.remove("drag-over"),
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag-over");
+        if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files[0]) setFile(fileInput.files[0]);
+      });
+
+      function setFile(f) {
+        selectedFile = f;
+        document.getElementById("fileName").textContent = f.name;
+        document.getElementById("fileSize").textContent =
+          formatSize(f.size) + " · " + f.type.split("/")[1].toUpperCase();
+        document.getElementById("filePreview").classList.add("show");
+        updateVerifyBtn();
+      }
+      document.getElementById("fileRemove").addEventListener("click", () => {
+        selectedFile = null;
+        fileInput.value = "";
+        document.getElementById("filePreview").classList.remove("show");
+        updateVerifyBtn();
+      });
+      function formatSize(b) {
+        if (b < 1024) return b + " B";
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+        return (b / (1024 * 1024)).toFixed(2) + " MB";
+      }
+
+      function selectPlatform(platform) {
+        document
+          .querySelectorAll(".platform-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .querySelectorAll(".platform-info")
+          .forEach((i) => i.classList.remove("show"));
+        document
+          .querySelector(`[data-platform="${platform}"]`)
+          .classList.add("active");
+        document.getElementById(`info-${platform}`).classList.add("show");
+        selectedPlatform = platform;
+        const color = PLATFORM_COLORS[platform];
+        document
+          .querySelector(":root")
+          .style.setProperty("--current-accent", color);
+        document.getElementById("cardGlow").style.background =
+          `linear-gradient(90deg,transparent,${color},transparent)`;
+        document.getElementById("loaderArc").style.stroke = color;
+        updateVerifyBtn();
+      }
+
+      function updateVerifyBtn() {
+        const btn = document.getElementById("verifyBtn");
+        const ready = selectedFile && selectedPlatform;
+        btn.disabled = !ready;
+        if (!selectedPlatform) {
+          btn.textContent = "SELECT PLATFORM TO CONTINUE";
+          btn.style.background = "";
+          btn.classList.remove("has-platform");
+        } else if (!selectedFile) {
+          btn.textContent = `UPLOAD A ${PLATFORM_NAMES[selectedPlatform].toUpperCase()} CERTIFICATE`;
+          btn.style.background = PLATFORM_GRADIENTS[selectedPlatform];
+          btn.style.color = "#fff";
+          btn.classList.add("has-platform");
+        } else {
+          btn.textContent = `VERIFY WITH ${PLATFORM_NAMES[selectedPlatform].toUpperCase()}`;
+          btn.style.background = PLATFORM_GRADIENTS[selectedPlatform];
+          btn.style.color = "#fff";
+          btn.classList.add("has-platform");
+        }
+      }
+
+      let stepInterval = null;
+      function verifyCertificate() {
+        if (!selectedFile || !selectedPlatform) return;
+        document.getElementById("filePreview").style.display = "none";
+        document.getElementById("verifyBtn").style.display = "none";
+        document.getElementById("loadingWrap").classList.add("show");
+        document.getElementById("loadingTitle").style.color =
+          PLATFORM_COLORS[selectedPlatform];
+        const steps = PLATFORM_STEPS[selectedPlatform];
+        const stepsEl = document.getElementById("loadingSteps");
+        stepsEl.innerHTML = steps
+          .map(
+            (s, i) =>
+              `<div class="loading-step-item" id="step-${i}"><div class="step-dot"></div>${s}</div>`,
+          )
+          .join("");
+        let si = 0;
+        document.getElementById("step-0").classList.add("active");
+        stepInterval = setInterval(() => {
+          document
+            .getElementById(`step-${si}`)
+            ?.classList.replace("active", "done");
+          si++;
+          if (si < steps.length)
+            document.getElementById(`step-${si}`)?.classList.add("active");
+        }, 1800);
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE}/api/v1/verify/${selectedPlatform}`);
+        xhr.onload = function () {
+          clearInterval(stepInterval);
+          resetUI();
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) showModal(data);
+            else showErrorModal(data.detail || `Server error: ${xhr.status}`);
+          } catch (e) {
+            showErrorModal("Invalid response from server.");
+          }
+        };
+        xhr.onerror = () => {
+          clearInterval(stepInterval);
+          resetUI();
+          showErrorModal(
+            "Backend not running. Please double-click start.bat to launch the server, then try again.",
+          );
+        };
+        xhr.send(formData);
+      }
+
+      function resetUI() {
+        document.getElementById("loadingWrap").classList.remove("show");
+        document.getElementById("verifyBtn").style.display = "block";
+        document.getElementById("filePreview").style.display = "flex";
+      }
+
+      function showModal(data) {
+        const status = data.status || data.comparison?.verification_status;
+        const isGenuine =
+          data.is_genuine === true ||
+          data.comparison?.verification_status === "VALID";
+        if (status === "retry") {
+          showRetryModal(data);
+          return;
+        }
+        if (data.error) {
+          showErrorModal(data.error);
+          return;
+        }
+        const pColor = PLATFORM_COLORS[selectedPlatform];
+        const pName = PLATFORM_NAMES[selectedPlatform];
+        const verdict = isGenuine ? "genuine" : "fake";
+        document.getElementById("modalTopBar").className =
+          `modal-top-bar ${verdict}`;
+        let certId = "";
+        if (selectedPlatform === "nptel")
+          certId =
+            data.official_fields?.roll_or_cert_id ||
+            data.uploaded_fields?.roll_or_cert_id ||
+            "—";
+        else if (selectedPlatform === "codetantra")
+          certId =
+            data.certificate_id ||
+            data.data?.uploaded_data?.certificate_id ||
+            "—";
+        else certId = data.data?.uploaded_data?.certificate_id || "—";
+        document.getElementById("modalHead").innerHTML = `
+        <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <div class="verdict-row">
+          <div class="verdict-badge ${verdict}"><span>${isGenuine ? "✓" : "✗"}</span>${isGenuine ? "GENUINE CERTIFICATE" : "FAKE / TAMPERED"}</div>
+          <div class="platform-badge" style="background:${pColor}22;color:${pColor};border:1px solid ${pColor}44">${pName.toUpperCase()}</div>
+        </div>
+        <div class="modal-title">${isGenuine ? "Certificate Verified ✓" : "Verification Failed ✗"}</div>
+        <div class="modal-cert-id">ID: ${certId}</div>`;
+        let fields = [];
+        if (selectedPlatform === "nptel") {
+          const fm =
+            data.comparison?.field_matches ||
+            data.comparison?.field_comparison ||
+            {};
+          Object.entries(fm).forEach(([key, val]) => {
+            if (val && typeof val === "object")
+              fields.push({
+                label: val.label || key,
+                uploaded: val.uploaded || "—",
+                official: val.official || "—",
+                match: val.match === true,
+              });
+          });
+        } else if (selectedPlatform === "codetantra") {
+          const fb = data.field_breakdown || {},
+            ud = data.data?.uploaded_data || {},
+            od = data.data?.official_data || {};
+          [
+            ["certificate_id", "CERT ID"],
+            ["name", "NAME"],
+            ["course", "COURSE"],
+            ["date", "DATE"],
+          ].forEach(([k, lbl]) => {
+            fields.push({
+              label: lbl,
+              uploaded: ud[k] || "—",
+              official: od[k] || "—",
+              match: fb[k]?.result === true,
+            });
+          });
+        } else {
+          const fb = data.field_breakdown || {},
+            ud = data.data?.uploaded_data || {},
+            of = data.data?.official_data || {};
+          const fkeys =
+            selectedPlatform === "udemy"
+              ? [
+                  ["certificate_id", "CERT ID"],
+                  ["name", "NAME"],
+                  ["course", "COURSE"],
+                  ["date", "DATE"],
+                ]
+              : [
+                  ["name", "NAME"],
+                  ["course", "COURSE"],
+                  ["date", "DATE"],
+                ];
+          fkeys.forEach(([k, lbl]) => {
+            fields.push({
+              label: lbl,
+              uploaded: ud[k] || "—",
+              official: of[k] || "—",
+              match: fb[k]?.result === true,
+            });
+          });
+          if (data.field_breakdown?.url_valid)
+            fields.push({
+              label: "URL",
+              uploaded: data.verify_url || "—",
+              official: "HTTP 200",
+              match: data.field_breakdown.url_valid.result === true,
+            });
+        }
+        const passCount = fields.filter((f) => f.match).length;
+        const pct = fields.length
+          ? Math.round((passCount / fields.length) * 100)
+          : 0;
+        const fillClass = pct === 100 ? "full" : pct >= 50 ? "half" : "low";
+        document.getElementById("modalBody").innerHTML = `
+        <div class="section-head">Field Comparison</div>
+        <table class="cmp-table"><thead><tr><th>Field</th><th>Uploaded</th><th>Official</th><th></th></tr></thead>
+        <tbody>${fields.map((f) => `<tr><td>${f.label}</td><td><div class="field-val uploaded ${!f.uploaded || f.uploaded === "—" ? "empty" : ""}">${f.uploaded}</div></td><td><div class="field-val official ${!f.official || f.official === "—" ? "empty" : ""}">${f.official}</div></td><td><div class="match-icon ${f.match ? "pass" : "fail"}">${f.match ? "✓" : "✗"}</div></td></tr>`).join("")}</tbody></table>
+        <div class="score-section">
+          <div class="score-header"><span>Verification Score</span><span>${passCount}/${fields.length} fields · ${pct}%</span></div>
+          <div class="score-track"><div class="score-fill ${fillClass}" id="scoreFill" style="width:0%"></div></div>
+        </div>
+        ${data.verify_url ? `<div class="verify-link-row"><svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="${pColor}" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg><a href="${data.verify_url}" target="_blank">${data.verify_url}</a></div>` : ""}`;
+        openModal();
+        setTimeout(() => {
+          const fill = document.getElementById("scoreFill");
+          if (fill) fill.style.width = pct + "%";
+        }, 100);
+      }
+
+      function showRetryModal(data) {
+        document.getElementById("modalTopBar").className =
+          "modal-top-bar retry";
+        document.getElementById("modalHead").innerHTML =
+          `<button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="verdict-row"><div class="verdict-badge retry">⚠ INCOMPLETE</div><div class="platform-badge" style="background:rgba(240,165,0,0.1);color:#F0A500;border:1px solid rgba(240,165,0,0.2)">${PLATFORM_NAMES[selectedPlatform].toUpperCase()}</div></div><div class="modal-title">Official image unavailable</div><div class="modal-cert-id">ID: ${data.certificate_id || "—"}</div>`;
+        document.getElementById("modalBody").innerHTML =
+          `<p style="color:var(--muted);line-height:1.7;margin-bottom:20px">The official certificate image was temporarily unavailable. This does <strong style="color:var(--text)">not</strong> mean the certificate is fake — the server may be temporarily blocked. Please try again.</p>${data.verify_url ? `<div class="verify-link-row"><a href="${data.verify_url}" target="_blank">${data.verify_url}</a></div>` : ""}<button class="retry-btn" onclick="closeModal();verifyCertificate()">🔄 TRY AGAIN</button>`;
+        openModal();
+      }
+
+      function showErrorModal(msg) {
+        document.getElementById("modalTopBar").className =
+          "modal-top-bar error";
+        document.getElementById("modalHead").innerHTML =
+          `<button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="verdict-row"><div class="verdict-badge fake">✗ ERROR</div></div><div class="modal-title">Verification Failed</div>`;
+        document.getElementById("modalBody").innerHTML =
+          `<div style="background:var(--red-dim);border:1px solid rgba(255,77,109,0.2);border-radius:12px;padding:16px;color:#ff8a8a;margin-bottom:16px;font-size:13px;font-family:'JetBrains Mono',monospace">⚠ ${msg}</div><button class="retry-btn" onclick="closeModal()">← GO BACK</button>`;
+        openModal();
+      }
+
+      function openModal() {
+        document.getElementById("modalBackdrop").classList.add("show");
+      }
+      function closeModal() {
+        document.getElementById("modalBackdrop").classList.remove("show");
+      }
+      function closeModalOutside(e) {
+        if (e.target === document.getElementById("modalBackdrop")) closeModal();
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+    </script>
+
+    <script>
+      (function () {
+        if (typeof THREE === "undefined") return;
+        const canvas = document.getElementById("bg-canvas");
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: false,
+          alpha: true,
+        });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setClearColor(0x020210, 1);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+          60,
+          innerWidth / innerHeight,
+          0.1,
+          2000,
+        );
+        camera.position.z = 500;
+        function resize() {
+          renderer.setSize(innerWidth, innerHeight);
+          camera.aspect = innerWidth / innerHeight;
+          camera.updateProjectionMatrix();
+        }
+        resize();
+        window.addEventListener("resize", resize);
+        const STARS = 9000;
+        const pos = new Float32Array(STARS * 3),
+          sz = new Float32Array(STARS),
+          al = new Float32Array(STARS);
+        for (let i = 0; i < STARS; i++) {
+          pos[i * 3] = (Math.random() - 0.5) * 2200;
+          pos[i * 3 + 1] = (Math.random() - 0.5) * 2200;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 1200 - 200;
+          sz[i] = Math.random() * 2.4 + 0.2;
+          al[i] = Math.random() * 0.7 + 0.2;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute("aSize", new THREE.BufferAttribute(sz, 1));
+        geo.setAttribute("aAlpha", new THREE.BufferAttribute(al, 1));
+        const mat = new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          uniforms: { uTime: { value: 0 } },
+          vertexShader: `attribute float aSize;attribute float aAlpha;varying float vAlpha;uniform float uTime;void main(){vAlpha=aAlpha*(0.75+0.25*sin(uTime*0.9+position.x*0.008));vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=aSize*(320.0/-mv.z);gl_Position=projectionMatrix*mv;}`,
+          fragmentShader: `varying float vAlpha;void main(){float d=distance(gl_PointCoord,vec2(0.5));if(d>0.5)discard;float a=smoothstep(0.5,0.0,d);gl_FragColor=vec4(0.72+0.28*d,0.87+0.13*d,1.0,a*vAlpha);}`,
+        });
+        const stars = new THREE.Points(geo, mat);
+        scene.add(stars);
+        const cursorLight = new THREE.PointLight(0x00c8ff, 2.2, 750);
+        cursorLight.position.set(0, 0, 280);
+        scene.add(cursorLight);
+        scene.add(new THREE.AmbientLight(0x08082a, 1));
+        const glowEl = document.getElementById("cursor-glow");
+        let mx = 0,
+          my = 0;
+        window.addEventListener("mousemove", function (e) {
+          mx = e.clientX / innerWidth - 0.5;
+          my = e.clientY / innerHeight - 0.5;
+          cursorLight.position.x = mx * 620;
+          cursorLight.position.y = -my * 420;
+          glowEl.style.left = e.clientX + "px";
+          glowEl.style.top = e.clientY + "px";
+          const hue = Math.round(185 + mx * 70);
+          glowEl.style.background =
+            "radial-gradient(circle,hsla(" +
+            hue +
+            ",100%,62%,0.06) 0%,transparent 70%)";
+        });
+        let t = 0;
+        function animate() {
+          requestAnimationFrame(animate);
+          t += 0.004;
+          mat.uniforms.uTime.value = t;
+          camera.position.x += (mx * 35 - camera.position.x) * 0.018;
+          camera.position.y += (-my * 22 - camera.position.y) * 0.018;
+          camera.lookAt(scene.position);
+          stars.rotation.y = t * 0.013;
+          stars.rotation.x = Math.sin(t * 0.08) * 0.018;
+          renderer.render(scene, camera);
+        }
+        animate();
+      })();
+    </script>
+
+    <script>
+      (function () {
+        const btn = document.getElementById("verifyBtn");
+        if (!btn) return;
+        btn.addEventListener("mousedown", function (e) {
+          const r = document.createElement("span");
+          const rect = btn.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height) * 2;
+          r.style.cssText = `position:absolute;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px;width:${size}px;height:${size}px;border-radius:50%;background:rgba(255,255,255,0.25);pointer-events:none;transform:scale(0);animation:rippleBtn 0.6s ease-out forwards;`;
+          btn.style.position = "relative";
+          btn.style.overflow = "hidden";
+          btn.appendChild(r);
+          setTimeout(() => r.remove(), 650);
+        });
+        const style = document.createElement("style");
+        style.textContent =
+          "@keyframes rippleBtn{to{transform:scale(1);opacity:0}}";
+        document.head.appendChild(style);
+      })();
+    </script>
+  </body>
+</html>

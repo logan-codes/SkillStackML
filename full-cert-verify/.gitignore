@@ -1,0 +1,51 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs and Editors
+.history/
+.vscode/
+.idea/
+*.swp
+*.swo
+.sublime-workspace
+.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+
+# Python packaging and distribution
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing and coverage
+.coverage
+.tox/
+.pytest_cache/
+htmlcov/
+
+NPTL-CERTIFICATES/
