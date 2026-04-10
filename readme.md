@@ -1,134 +1,133 @@
-# SkillStack ML
+# CertVerify — Multi-Platform Certificate Verification
 
-A collaborative repository for trialling and comparing machine learning workflow systems and models for the use of verifying an certificate is real/fake for SkillStack project.
-
----
-
-## Overview
-
-This repository functions like a **kitchen with multiple chefs experimenting with recipes**. The `main` branch is the restaurant menu — it only lists what's available. The `deploy` branch is the kitchen actively cooking one dish at a time. And `dev` is the recipe archive where all past and present experiments live, organised and ready to be built upon.
-
-Collaborators branch off from `dev`, add their own workflow system, and merge back — keeping everything organised and comparable.
+Unified certificate verification system supporting **NPTEL**, **CodeTantra**, **Coursera**, and **Udemy** — powered by OCR, web scraping, and Groq Vision AI.
 
 ---
 
-## Branch Structure
+## Quick Start
 
 ```
-main        ← README only. The entry point. You are here.
+Double-click  start.bat
+```
+
+That's it. The script will:
+1. Create a Python virtual environment
+2. Install all dependencies
+3. Open the frontend in your browser
+4. Start the backend API on `http://localhost:8000`
+
+---
+
+## Project Structure
+
+```
+certverify/
+├── start.bat                    ← Single-command launcher (Windows)
 │
-├── deploy  ← The active system currently in production/use. One system at a time.
+├── backend/
+│   ├── main.py                  ← FastAPI app entry point
+│   ├── requirements.txt         ← All Python dependencies
+│   ├── .env                     ← Environment config (add GROQ_API_KEY here)
+│   ├── .env.example             ← Template for .env
+│   │
+│   ├── api/
+│   │   └── v1/
+│   │       └── routes.py        ← All API endpoints (/api/v1/...)
+│   │
+│   ├── core/
+│   │   ├── config.py            ← Settings loaded from .env (pydantic-settings)
+│   │   ├── logger.py            ← Structured logging setup
+│   │   └── registry.py          ← Workflow registry (provider → workflow instance)
+│   │
+│   ├── schema/
+│   │   └── workflow.py          ← Abstract base class all workflows inherit from
+│   │
+│   ├── services/                ← Shared low-level services
+│   │   ├── ocr_engine.py        ← Smart OCR (OpenCV+Tesseract → Pillow → PyMuPDF)
+│   │   ├── qr_scanner.py        ← QR code detection (pyzbar → OpenCV → preprocessed)
+│   │   ├── nptel_fetcher.py     ← Fetch NPTEL portal → find PDF → OCR it
+│   │   ├── comparator.py        ← 5-field weighted scoring for NPTEL
+│   │   ├── browser_fetcher.py   ← Playwright headless browser fallback
+│   │   └── groq_client.py       ← Shared Groq Vision AI + semantic compare
+│   │
+│   ├── workflows/               ← One file per platform — pure pipeline logic
+│   │   ├── nptel.py             ← OCR → QR → fetch portal → compare 5 fields
+│   │   ├── codetantra.py        ← OCR → scrape portal → compare 4 fields
+│   │   ├── coursera.py          ← Vision AI → S3 image → URL ping → compare
+│   │   └── udemy.py             ← Vision AI → S3 image → compare 4 fields
+│   │
+│   └── utils/
+│       ├── file_utils.py        ← save_temp_file, to_image_bytes, normalize helpers
+│       └── compare.py           ← _strict_compare wrapper for NPTEL
 │
-└── dev     ← All experimental systems, each in its own folder.
-    ├── system-a/
-    ├── system-b/
-    ├── your-new-system/
-    └── ...
-```
-
-| Branch   | Purpose              | Contents                         |
-| -------- | -------------------- | -------------------------------- |
-| `main`   | Documentation hub    | This README only                 |
-| `deploy` | Active deployment    | The single current system in use |
-| `dev`    | Experimentation base | All systems as organised folders |
-
-## How to Contribute a New System
-
-Think of `dev` as a shared lab bench. You take your own section of the bench (a branch), set up your experiment, and when you're done, you return your notes to the shared bench (merge back to `dev`).
-
-### Step-by-step
-
-**1. Branch from `dev`**
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b your-system-name
-```
-
-**2. Create a folder for your system**
-
-Add your system under a clearly named directory:
-
-```
-dev/
-└── your-system-name/
-    ├── README.md        ← Describe your system, models used, and results
-    ├── config/
-    ├── models/
-    └── pipeline/
-```
-
-**3. Develop and document your system**
-
-Each system folder should include its own `README.md` covering:
-
-- System description and objective
-- ML model(s) used and configuration
-- How to run the pipeline
-- Results and observations
-
-**4. Merge back to `dev`**
-
-```bash
-git add .
-git commit -m "feat: add [your-system-name] workflow"
-git push origin your-system-name
-# Open a Pull Request → dev
+└── frontend/
+    └── index.html               ← Full UI (no build step needed — pure HTML/CSS/JS)
 ```
 
 ---
 
-## Promoting a System to Deploy
+## API Endpoints
 
-When a system from `dev` is selected as the active one, it is promoted to the `deploy` branch. The `deploy` branch reflects the **single system currently in use** — it is overwritten, not accumulated.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET  | `/api/v1/` | Health check |
+| GET  | `/api/v1/workflows` | List all providers + metadata |
+| POST | `/api/v1/verify/nptel` | Verify NPTEL certificate |
+| POST | `/api/v1/verify/codetantra` | Verify CodeTantra certificate |
+| POST | `/api/v1/verify/coursera` | Verify Coursera certificate |
+| POST | `/api/v1/verify/udemy` | Verify Udemy certificate |
 
-```bash
-git checkout deploy
-git checkout dev -- your-system-name/
-# Restructure as needed, then push
-git push origin deploy
-```
-
-> ⚠️ The `deploy` branch is not a history of all systems — it represents the **current winner**. All systems and their history live in `dev`.
-
----
-
-## Repository Rules
-
-- **Do not push directly to `main` or `deploy`** — changes go through `dev` first.
-- **Always branch from `dev`**, not `main` or `deploy`.
-- **Each system must live in its own folder** within `dev`.
-- **Document your system** with a `README.md` inside your folder before merging.
-- Pull Requests into `dev` require at least one reviewer.
+Interactive docs: `http://localhost:8000/docs`
 
 ---
 
-## Folder Naming Convention
+## Platform Pipelines
 
-Use lowercase, hyphenated names that describe the system:
-
+### NPTEL
 ```
-✅  bert-classification-pipeline/
-✅  llm-rag-system-v2/
-✅  xgboost-tabular-baseline/
-❌  MySystem/
-❌  test123/
-❌  new_folder/
+Upload → OCR (OpenCV+Tesseract) → QR scan → NPTEL portal
+→ "Course Certificate" button → download PDF → OCR → 5-field compare
+```
+
+### CodeTantra
+```
+Upload → OCR (PyMuPDF+Tesseract) → extract CT####-xxx cert ID
+→ scrape sathyabama.codetantra.com (3 retries) → 4-field compare
+```
+
+### Coursera
+```
+Upload → Vision AI (Llama 4 Scout) → download S3 JPEG
+→ Vision AI on official → URL ping → AI semantic compare
+```
+
+### Udemy
+```
+Upload → Vision AI (Llama 4 Scout) → ensure uppercase UC-
+→ download S3 JPEG → Vision AI on official → AI semantic compare
 ```
 
 ---
 
-## Getting Started
+## Configuration (.env)
 
-```bash
-# Clone the repo
-git clone <repo-url>
-cd <repo-name>
-
-# Switch to dev to explore existing systems
-git checkout dev
-
-# See all available systems
-ls
+```env
+GROQ_API_KEY=your_key_here    # Required for Coursera + Udemy
+HOST=0.0.0.0
+PORT=8000
+LOG_LEVEL=info
 ```
+
+Get a free Groq key at: https://console.groq.com
+
+---
+
+## Adding a New Platform
+
+1. Create `backend/workflows/myplatform.py` extending `Workflow`
+2. Implement `process(self, payload: dict) -> dict`
+3. Add one line to `core/registry.py`:
+   ```python
+   "myplatform": MyPlatformWorkflow(),
+   ```
+4. Done — the API automatically exposes `/api/v1/verify/myplatform`

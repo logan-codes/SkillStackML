@@ -1,148 +1,51 @@
-# =============================================================================
-# LARGE FILES & MODEL WEIGHTS
-# =============================================================================
-# Model weights & checkpoints
-*.pt
-*.pth
-*.ckpt
-*.safetensors
-*.bin
-*.h5
-*.hdf5
-*.pb
-*.onnx
-*.tflite
-*.mlmodel
-*.pkl
-*.pickle
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Model directories (common patterns)
-models/
-weights/
-checkpoints/
-saved_models/
-model_cache/
-.cache/
-
-# Hugging Face cache
-~/.cache/huggingface/
-huggingface_cache/
-
-# =============================================================================
-# LARGE DATA FILES
-# =============================================================================
-*.csv
-*.tsv
-*.parquet
-*.feather
-*.arrow
-*.jsonl
-*.ndjson
-*.avro
-
-# Archives
-*.zip
-*.tar
-*.tar.gz
-*.tgz
-*.tar.bz2
-*.rar
-*.7z
-
-# Images / Audio / Video (datasets)
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.webp
-*.mp3
-*.wav
-*.flac
-*.mp4
-*.avi
-*.mov
-*.mkv
-
-# Data directories
-data/
-datasets/
-raw/
-processed/
-interim/
-
-# =============================================================================
-# PYTHON
-# =============================================================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-dist/
-*.egg-info/
-.eggs/
-*.egg
-.venv/
-venv/
-env/
-ENV/
-.env
 
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb_checkpoints
-
-# =============================================================================
-# EXPERIMENT TRACKING & LOGS
-# =============================================================================
-# MLflow
-mlruns/
-mlartifacts/
-
-# Weights & Biases
-wandb/
-
-# TensorBoard
-runs/
-logs/
-*.log
-*.tfevents.*
-
-# =============================================================================
-# SECRETS & CONFIG
-# =============================================================================
-.env
-.env.*
-*.pem
-*.key
-secrets.yaml
-secrets.json
-config/local_*
-
-# =============================================================================
-# NODE.JS & FRONTEND
-# =============================================================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Next.js build output
-.next/
-out/
-.vercel/
-
-# =============================================================================
-# OS & EDITOR JUNK
-# =============================================================================
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+# IDEs and Editors
 .history/
+.vscode/
+.idea/
 *.swp
 *.swo
+.sublime-workspace
+.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+
+# Python packaging and distribution
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing and coverage
+.coverage
+.tox/
+.pytest_cache/
+htmlcov/
+
+NPTL-CERTIFICATES/
